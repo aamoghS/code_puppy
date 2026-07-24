@@ -227,14 +227,13 @@ async def _invoke_agent_impl(
             instructions = agent_config.get_full_system_prompt()
             instructions += f"\n\n{_subagent_identity_prompt(agent_name)}"
 
-            # Add AGENTS.md content to subagents.
-            # ``load_puppy_rules`` lives on the builder module since the
-            # base_agent split in 79dfc3c8; it's not a method on the agent.
-            from code_puppy.agents._builder import load_puppy_rules
-
-            puppy_rules = load_puppy_rules()
-            if puppy_rules:
-                instructions += f"\n\n{puppy_rules}"
+            # AGENTS.md (puppy rules) is deliberately NOT injected into
+            # sub-agents. Those files are user-facing steering for the MAIN
+            # agent; feeding them to sub-agents creates anti-patterns — e.g.
+            # a rule like "always invoke the xyz agent for abc" makes the
+            # xyz sub-agent (which has ``invoke_agent``) re-invoke itself in
+            # an infinite recursion trap. Sub-agents get only their own
+            # authored prompt + the identity note above.
 
             # NOTE: ``load_prompt`` fragments (file-permission handling, kennel
             # memory, ...) are already baked into ``get_full_system_prompt``
